@@ -1,3 +1,4 @@
+mod capture;
 mod db;
 mod ocr;
 
@@ -26,6 +27,7 @@ fn delete_match(state: tauri::State<'_, DbState>, id: i64) -> Result<usize, Stri
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .setup(|app| {
             let app_dir = app.path().app_data_dir().expect("failed to get app data dir");
             let conn = db::init_db(&app_dir);
@@ -36,7 +38,8 @@ pub fn run() {
             create_match,
             get_matches,
             delete_match,
-            ocr::ocr_match_screenshot
+            ocr::ocr_match_screenshot,
+            capture::capture_sf6_window
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

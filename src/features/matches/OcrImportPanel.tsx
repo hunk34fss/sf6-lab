@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { invoke } from "@tauri-apps/api/core";
 import { characterDisplayName } from "@/domain/match";
 import type { OcrMatchDraft } from "@/domain/ocrParse";
 import { OcrSource } from "@/infrastructure/import/OcrSource";
@@ -7,11 +8,18 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 
+interface CaptureResult {
+  png_bytes: number[];
+  window_title: string;
+}
+
 interface Props {
   onApply: (prefill: MatchFormPrefill) => void;
   onClose: () => void;
   /** When false, ignore Ctrl+V paste (dialog closed) */
   active?: boolean;
+  /** Increment to trigger SF6 window capture + OCR */
+  autoCaptureToken?: number;
 }
 
 const ocrSource = new OcrSource();
@@ -36,13 +44,21 @@ async function readClipboardImage(): Promise<Uint8Array | null> {
   return null;
 }
 
-export function OcrImportPanel({ onApply, onClose, active = true }: Props) {
+export function OcrImportPanel({
+  onApply,
+  onClose,
+  active = true,
+  autoCaptureToken = 0,
+}: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [draft, setDraft] = useState<OcrMatchDraft | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [status, setStatus] = useState("画像ファイルを選択するか、クリップボードから貼り付けてください");
+  const [status, setStatus] = useState(
+    "画像ファイル選択 / クリップボード貼り付け / F8（SF6キャプチャ）が使えます"
+  );
+  const lastAutoCaptureToken = useRef(0);
 
   useEffect(() => {
     return () => {
@@ -94,6 +110,38 @@ export function OcrImportPanel({ onApply, onClose, active = true }: Props) {
       setError(String(err));
     }
   }
+
+  useEffect(() => {
+    if (!active || !autoCaptureToken || autoCaptureToken === lastAutoCaptureToken.current) {
+      return;
+    }
+    lastAutoCaptureToken.current = autoCaptureToken;
+
+    void (async () => {
+      setBusy(true);
+      setError("");
+      setDraft(null);
+      setStatus("SF6ウィンドウをキャプチャ中...");
+      try {
+        const captured = await invoke<CaptureResult>("capture_sf6_window");
+        const bytes = new Uint8Array(captured.png_bytes);
+        const blob = new Blob([bytes], { type: "image/png" });
+        setPreviewUrl((prev) => {
+          if (prev) URL.revokeObjectURL(prev);
+          return URL.createObjectURL(blob);
+        });
+        setStatus(`キャプチャ完了（${captured.window_title}）。OCR実行中...`);
+        const result = await ocrSource.recognizeImage(bytes);
+        setDraft(result);
+        setStatus(`OCR完了（${captured.window_title}）。内容を確認してフォームへ反映してください`);
+      } catch (err) {
+        setError(String(err));
+        setStatus("キャプチャまたはOCRに失敗しました");
+      } finally {
+        setBusy(false);
+      }
+    })();
+  }, [active, autoCaptureToken]);
 
   useEffect(() => {
     if (!active) return;
@@ -155,7 +203,9 @@ export function OcrImportPanel({ onApply, onClose, active = true }: Props) {
         />
       </div>
 
-      <p className="text-muted-foreground text-xs">Ctrl+V でも画像を貼り付けできます</p>
+      <p className="text-muted-foreground text-xs">
+        Ctrl+V で貼り付け、またはグローバルホットキー F8 で SF6 ウィンドウをキャプチャできます
+      </p>
       <p className="text-muted-foreground text-sm">{status}</p>
       {error && <p className="text-destructive text-sm">{error}</p>}
 

@@ -1,5 +1,7 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { getCurrentWindow } from "@tauri-apps/api/window";
+import { isRegistered, register, unregister } from "@tauri-apps/plugin-global-shortcut";
 import type { Match } from "@/domain/match";
 import { SF6_CHARACTERS } from "@/domain/match";
 import { OcrImportPanel } from "./OcrImportPanel";
@@ -22,6 +24,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+
+const HOTKEY = "F8";
 
 export interface MatchFormPrefill {
   my_character?: string;
@@ -51,6 +55,8 @@ export function MatchForm({ onCreated }: Props) {
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [ocrOpen, setOcrOpen] = useState(false);
+  const [autoCaptureToken, setAutoCaptureToken] = useState(0);
+  const hotkeyBusy = useRef(false);
 
   useEffect(() => {
     if (!syncNow) return;
@@ -59,6 +65,50 @@ export function MatchForm({ onCreated }: Props) {
     const id = window.setInterval(tick, 1000);
     return () => window.clearInterval(id);
   }, [syncNow]);
+
+  const triggerHotkeyCapture = useCallback(async () => {
+    if (hotkeyBusy.current) return;
+    hotkeyBusy.current = true;
+    try {
+      const win = getCurrentWindow();
+      try {
+        await win.unminimize();
+        await win.setFocus();
+      } catch {
+        // focus is best-effort while another game is foreground
+      }
+      setOcrOpen(true);
+      setAutoCaptureToken((v) => v + 1);
+    } finally {
+      window.setTimeout(() => {
+        hotkeyBusy.current = false;
+      }, 500);
+    }
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    void (async () => {
+      try {
+        if (await isRegistered(HOTKEY)) {
+          await unregister(HOTKEY);
+        }
+        if (cancelled) return;
+        await register(HOTKEY, (event) => {
+          if (event.state !== "Pressed") return;
+          void triggerHotkeyCapture();
+        });
+      } catch (err) {
+        console.error("Failed to register F8 hotkey", err);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      void unregister(HOTKEY).catch(() => undefined);
+    };
+  }, [triggerHotkeyCapture]);
 
   const resumeSync = useCallback(() => {
     setPlayedAt(formatLocalDateTime(new Date()));
@@ -257,11 +307,12 @@ export function MatchForm({ onCreated }: Props) {
           <DialogHeader>
             <DialogTitle>OCR取込</DialogTitle>
             <DialogDescription>
-              ランクマッチ結果画面のスクショから自動入力します（確認後に登録）
+              ランクマッチ結果画面のスクショから自動入力します。F8 で SF6 ウィンドウをキャプチャできます。
             </DialogDescription>
           </DialogHeader>
           <OcrImportPanel
             active={ocrOpen}
+            autoCaptureToken={autoCaptureToken}
             onApply={applyPrefill}
             onClose={() => setOcrOpen(false)}
           />
