@@ -113,6 +113,22 @@ body {
   font-size: 0.9rem;
 }
 
+.mr-input {
+  height: 44px;
+  font-size: 1.05rem;
+  padding-right: 8px;
+}
+
+.mr-input::-webkit-inner-spin-button,
+.mr-input::-webkit-outer-spin-button {
+  opacity: 1;
+  width: 28px;
+  height: 40px;
+  cursor: pointer;
+  transform: scale(1.35);
+  margin-left: 4px;
+}
+
 .match-form button {
   grid-column: 1 / -1;
   background: var(--accent);
