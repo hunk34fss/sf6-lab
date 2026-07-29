@@ -8,6 +8,7 @@ import { OcrImportPanel } from "@/features/matches/OcrImportPanel";
 import { MrTrendChart } from "@/features/dashboard/MrTrendChart";
 import { WinRateCards } from "@/features/dashboard/WinRateCards";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -52,7 +53,7 @@ function App() {
   }
 
   return (
-    <main className="mx-auto max-w-5xl space-y-6 p-4">
+    <main className="mx-auto max-w-5xl space-y-6 p-4 md:p-6">
       <header className="flex flex-col gap-3 border-b pb-4 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-semibold tracking-tight">SF6 Lab</h1>
         <nav className="flex gap-2">
@@ -80,30 +81,34 @@ function App() {
       )}
 
       {tab === "dashboard" && (
-        <div className="tab-content">
-          <div className="filter-bar">
-            <div className="flex items-center gap-2">
-              <Label>表示件数</Label>
-              <Select
-                value={String(recentN)}
-                onValueChange={(v) => setRecentN(Number(v))}
-              >
-                <SelectTrigger className="w-36">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="0">全件</SelectItem>
-                  <SelectItem value="10">直近10戦</SelectItem>
-                  <SelectItem value="20">直近20戦</SelectItem>
-                  <SelectItem value="50">直近50戦</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="overall-stats">
-              <span>総合: {overall.wins}W {overall.losses}L</span>
-              <span className="overall-rate">({(overall.winRate * 100).toFixed(1)}%)</span>
-            </div>
-          </div>
+        <div className="space-y-6">
+          <Card>
+            <CardContent className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center">
+              <div className="flex items-center gap-2">
+                <Label>表示件数</Label>
+                <Select
+                  value={String(recentN)}
+                  onValueChange={(v) => setRecentN(Number(v))}
+                >
+                  <SelectTrigger className="w-36">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0">全件</SelectItem>
+                    <SelectItem value="10">直近10戦</SelectItem>
+                    <SelectItem value="20">直近20戦</SelectItem>
+                    <SelectItem value="50">直近50戦</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="sm:ml-auto flex items-center gap-2 text-sm">
+                <span>総合: {overall.wins}W {overall.losses}L</span>
+                <span className="text-primary font-semibold">
+                  ({(overall.winRate * 100).toFixed(1)}%)
+                </span>
+              </div>
+            </CardContent>
+          </Card>
           <MrTrendChart data={mrData} />
           <WinRateCards title="自キャラ別勝率" stats={myCharStats} />
           <WinRateCards title="相手キャラ別勝率" stats={oppCharStats} />

@@ -5,6 +5,8 @@
 ## 機能
 
 - 対戦結果の手動入力・一覧表示
+- **スクリーンショット / OCR による自動入力**（ファイル選択・クリップボード貼り付け・Ctrl+V）
+- OCR解析結果のフォーム反映（確認後に登録）
 - MR推移の折れ線グラフ
 - 自キャラ / 相手キャラ別の勝率表示
 - 直近N戦フィルタ
@@ -13,8 +15,10 @@
 ## 技術スタック
 
 - **Frontend**: React + TypeScript + Vite
+- **UI**: shadcn/ui + Tailwind CSS v4
 - **Desktop**: Tauri (Rust)
 - **Storage**: SQLite (rusqlite)
+- **OCR**: Windows.Media.Ocr（WinRT）
 - **Chart**: Recharts
 - **State**: Zustand + TanStack Query
 
@@ -25,6 +29,7 @@
 - [Node.js](https://nodejs.org/) v20以上
 - [Rust](https://rustup.rs/) stable
 - [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/)（WindowsでのRustビルドに必要）
+- Windows OCR 言語パック（日本語/英語。設定 → 時刻と言語 → 言語と地域）
 
 ### インストール
 
@@ -46,15 +51,28 @@ npm run tauri dev
 npm run tauri build
 ```
 
+## OCR取込の使い方
+
+1. アプリの「対戦入力」タブを開く
+2. ランクマッチ結果画面のスクリーンショットを用意する
+3. 「画像ファイルを選択」または「クリップボードから貼り付け」（Ctrl+V 也可）
+4. 解析結果を確認し、「フォームに反映」
+5. 必要なら手動修正して「登録」
+
+ホットキーによるSF6ウィンドウ自動キャプチャは未実装（次フェーズ予定）です。
+
 ## 開発ルール
 
 - **ブランチ**: Issueからブランチを切る（例: `feat/#12-match-crud`）
+- **統合ブランチ**: 大きな機能は `develop-*` に集約し、完了後に `master` へPR
 - **コミット**: Conventional Commits（`feat:`, `fix:`, `chore:`）
-- **PR**: 対応Issueをリンク（`Closes #XX`）、PRテンプレートに従う
+- **PR**: 対応Issueをリンク（`Closes #XX`）、PRテンプレートに従う。`master` へのマージは GitHub Web で承認
 - **CI**: push / PR時にTypeScriptチェック・Rustチェックが自動実行
 
 ## 将来の拡張予定
 
-- スクリーンショット / OCRによる自動入力
+- ホットキーによるSF6ウィンドウ自動キャプチャ
+- OCR精度向上（領域切り出し・解像度対応）
 - リプレイファイル解析
 - 入力デバイスログ連携（技使用頻度の分析）
+- ダッシュボード全体の shadcn 化
