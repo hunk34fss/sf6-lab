@@ -1,5 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import type { Match } from "../../domain/match";
+import { characterDisplayName } from "../../domain/match";
 
 interface Props {
   matches: Match[];
@@ -40,8 +41,8 @@ export function MatchList({ matches, onDeleted }: Props) {
           {matches.map((m) => (
             <tr key={m.id} className={m.result === "win" ? "row-win" : "row-loss"}>
               <td>{new Date(m.played_at).toLocaleString("ja-JP")}</td>
-              <td>{m.my_character}</td>
-              <td>{m.opponent_character}</td>
+              <td>{characterDisplayName(m.my_character)}</td>
+              <td>{characterDisplayName(m.opponent_character)}</td>
               <td>{m.result === "win" ? "勝ち" : "負け"}</td>
               <td>{m.mr_after}</td>
               <td className={m.mr_after - m.mr_before >= 0 ? "positive" : "negative"}>

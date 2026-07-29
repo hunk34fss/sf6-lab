@@ -14,8 +14,8 @@ function formatLocalDateTime(date: Date): string {
 export function MatchForm({ onCreated }: Props) {
   const [playedAt, setPlayedAt] = useState(() => formatLocalDateTime(new Date()));
   const [syncNow, setSyncNow] = useState(true);
-  const [myChar, setMyChar] = useState<string>(SF6_CHARACTERS[0]);
-  const [oppChar, setOppChar] = useState<string>(SF6_CHARACTERS[1]);
+  const [myChar, setMyChar] = useState<string>(SF6_CHARACTERS[0].id);
+  const [oppChar, setOppChar] = useState<string>(SF6_CHARACTERS[1].id);
   const [result, setResult] = useState<"win" | "loss">("win");
   const [mrBefore, setMrBefore] = useState("");
   const [mrAfter, setMrAfter] = useState("");
@@ -106,7 +106,7 @@ export function MatchForm({ onCreated }: Props) {
         自キャラ
         <select value={myChar} onChange={(e) => setMyChar(e.target.value)}>
           {SF6_CHARACTERS.map((c) => (
-            <option key={c} value={c}>{c}</option>
+            <option key={c.id} value={c.id}>{c.ja}</option>
           ))}
         </select>
       </label>
@@ -115,7 +115,7 @@ export function MatchForm({ onCreated }: Props) {
         相手キャラ
         <select value={oppChar} onChange={(e) => setOppChar(e.target.value)}>
           {SF6_CHARACTERS.map((c) => (
-            <option key={c} value={c}>{c}</option>
+            <option key={c.id} value={c.id}>{c.ja}</option>
           ))}
         </select>
       </label>
