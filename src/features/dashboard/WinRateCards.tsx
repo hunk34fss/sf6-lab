@@ -1,4 +1,5 @@
 import type { WinRateStat } from "../../domain/stats";
+import { characterDisplayName } from "../../domain/match";
 
 interface Props {
   title: string;
@@ -14,7 +15,7 @@ export function WinRateCards({ title, stats }: Props) {
       <div className="winrate-grid">
         {stats.map((s) => (
           <div key={s.character} className="winrate-card">
-            <div className="char-name">{s.character}</div>
+            <div className="char-name">{characterDisplayName(s.character)}</div>
             <div className="winrate-value">{(s.winRate * 100).toFixed(1)}%</div>
             <div className="winrate-detail">
               {s.wins}W {s.losses}L ({s.total}戦)
@@ -25,3 +26,4 @@ export function WinRateCards({ title, stats }: Props) {
     </div>
   );
 }
+
