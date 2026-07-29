@@ -2,9 +2,8 @@ import { useState, useEffect, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import type { Match } from "@/domain/match";
 import { calcMrTimeline, calcWinRateByCharacter, calcOverallWinRate } from "@/domain/stats";
-import { MatchForm, type MatchFormPrefill } from "@/features/matches/MatchForm";
+import { MatchForm } from "@/features/matches/MatchForm";
 import { MatchList } from "@/features/matches/MatchList";
-import { OcrImportPanel } from "@/features/matches/OcrImportPanel";
 import { MrTrendChart } from "@/features/dashboard/MrTrendChart";
 import { WinRateCards } from "@/features/dashboard/WinRateCards";
 import { Button } from "@/components/ui/button";
@@ -25,8 +24,6 @@ function App() {
   const [matches, setMatches] = useState<Match[]>([]);
   const [tab, setTab] = useState<Tab>("input");
   const [recentN, setRecentN] = useState<number>(0);
-  const [prefill, setPrefill] = useState<MatchFormPrefill | null>(null);
-  const [prefillVersion, setPrefillVersion] = useState(0);
 
   const loadMatches = useCallback(async () => {
     try {
@@ -46,11 +43,6 @@ function App() {
   const myCharStats = calcWinRateByCharacter(filtered, "my_character");
   const oppCharStats = calcWinRateByCharacter(filtered, "opponent_character");
   const overall = calcOverallWinRate(filtered);
-
-  function handleOcrApply(next: MatchFormPrefill) {
-    setPrefill(next);
-    setPrefillVersion((v) => v + 1);
-  }
 
   return (
     <main className="mx-auto max-w-5xl space-y-6 p-4 md:p-6">
@@ -74,8 +66,7 @@ function App() {
 
       {tab === "input" && (
         <div className="space-y-6">
-          <OcrImportPanel onApply={handleOcrApply} />
-          <MatchForm onCreated={loadMatches} prefill={prefill} prefillVersion={prefillVersion} />
+          <MatchForm onCreated={loadMatches} />
           <MatchList matches={matches} onDeleted={loadMatches} />
         </div>
       )}

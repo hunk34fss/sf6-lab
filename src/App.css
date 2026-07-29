@@ -1,14 +1,12 @@
-/* Keep App.css free of :root/--border/--radius overrides so shadcn tokens stay intact. */
-
-.mr-input::-webkit-inner-spin-button,
-.mr-input::-webkit-outer-spin-button {
-  opacity: 0;
-  cursor: pointer;
+/* Hide number input spinners completely */
+.mr-input::-webkit-outer-spin-button,
+.mr-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+  display: none;
 }
 
-.mr-input:hover::-webkit-inner-spin-button,
-.mr-input:hover::-webkit-outer-spin-button,
-.mr-input:focus::-webkit-inner-spin-button,
-.mr-input:focus::-webkit-outer-spin-button {
-  opacity: 1;
+.mr-input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
 }
