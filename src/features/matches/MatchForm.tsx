@@ -1,7 +1,19 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import type { Match } from "../../domain/match";
-import { SF6_CHARACTERS } from "../../domain/match";
+import type { Match } from "@/domain/match";
+import { SF6_CHARACTERS } from "@/domain/match";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 export interface MatchFormPrefill {
   my_character?: string;
@@ -102,107 +114,132 @@ export function MatchForm({ onCreated, prefill, prefillVersion = 0 }: Props) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="match-form">
-      <h2>対戦結果を登録</h2>
+    <Card>
+      <CardHeader>
+        <CardTitle>対戦結果を登録</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-2 sm:col-span-2">
+            <Label htmlFor="played-at">日時</Label>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <Input
+                id="played-at"
+                type="datetime-local"
+                step="1"
+                value={playedAt}
+                onChange={(e) => {
+                  setSyncNow(false);
+                  setPlayedAt(e.target.value);
+                }}
+                required
+                className="flex-1"
+              />
+              <Button type="button" variant="outline" onClick={resumeSync} disabled={syncNow}>
+                {syncNow ? "同期中" : "現在時刻に同期"}
+              </Button>
+            </div>
+            <p className="text-muted-foreground text-xs">
+              {syncNow ? "PC時刻とリアルタイム同期中（手動編集も可能）" : "手動編集中"}
+            </p>
+          </div>
 
-      <label className="datetime-field">
-        日時
-        <div className="datetime-row">
-          <input
-            type="datetime-local"
-            step="1"
-            value={playedAt}
-            onChange={(e) => {
-              setSyncNow(false);
-              setPlayedAt(e.target.value);
-            }}
-            required
-          />
-          <button type="button" className="btn-sync" onClick={resumeSync} disabled={syncNow}>
-            {syncNow ? "同期中" : "現在時刻に同期"}
-          </button>
-        </div>
-        <span className="datetime-hint">
-          {syncNow ? "PC時刻とリアルタイム同期中（手動編集も可能）" : "手動編集中"}
-        </span>
-      </label>
+          <div className="grid gap-2">
+            <Label>自キャラ</Label>
+            <Select value={myChar} onValueChange={setMyChar}>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {SF6_CHARACTERS.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>{c.ja}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-      <label>
-        自キャラ
-        <select value={myChar} onChange={(e) => setMyChar(e.target.value)}>
-          {SF6_CHARACTERS.map((c) => (
-            <option key={c.id} value={c.id}>{c.ja}</option>
-          ))}
-        </select>
-      </label>
+          <div className="grid gap-2">
+            <Label>相手キャラ</Label>
+            <Select value={oppChar} onValueChange={setOppChar}>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {SF6_CHARACTERS.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>{c.ja}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-      <label>
-        相手キャラ
-        <select value={oppChar} onChange={(e) => setOppChar(e.target.value)}>
-          {SF6_CHARACTERS.map((c) => (
-            <option key={c.id} value={c.id}>{c.ja}</option>
-          ))}
-        </select>
-      </label>
+          <div className="grid gap-2 sm:col-span-2">
+            <Label>結果</Label>
+            <ToggleGroup
+              type="single"
+              value={result}
+              onValueChange={(value) => {
+                if (value === "win" || value === "loss") setResult(value);
+              }}
+              variant="outline"
+              className="w-full"
+            >
+              <ToggleGroupItem value="win" className="flex-1 data-[state=on]:border-green-500 data-[state=on]:text-green-600">
+                勝ち
+              </ToggleGroupItem>
+              <ToggleGroupItem value="loss" className="flex-1 data-[state=on]:border-red-500 data-[state=on]:text-red-600">
+                負け
+              </ToggleGroupItem>
+            </ToggleGroup>
+          </div>
 
-      <div className="result-field">
-        <span className="field-label">結果</span>
-        <div className="result-toggle" role="group" aria-label="勝敗">
-          <button
-            type="button"
-            className={`result-btn win ${result === "win" ? "active" : ""}`}
-            onClick={() => setResult("win")}
-          >
-            勝ち
-          </button>
-          <button
-            type="button"
-            className={`result-btn loss ${result === "loss" ? "active" : ""}`}
-            onClick={() => setResult("loss")}
-          >
-            負け
-          </button>
-        </div>
-      </div>
+          <div className="grid gap-2">
+            <Label htmlFor="mr-before">MR（変動前）</Label>
+            <Input
+              id="mr-before"
+              type="number"
+              className="mr-input"
+              value={mrBefore}
+              onChange={(e) => {
+                const next = e.target.value;
+                setMrBefore(next);
+                setMrAfter(next);
+              }}
+              required
+              min={0}
+            />
+          </div>
 
-      <div className="mr-row">
-        <label>
-          MR（変動前）
-          <input
-            className="mr-input"
-            type="number"
-            value={mrBefore}
-            onChange={(e) => {
-              const next = e.target.value;
-              setMrBefore(next);
-              setMrAfter(next);
-            }}
-            required
-            min={0}
-          />
-        </label>
-        <label>
-          MR（変動後）
-          <input
-            className="mr-input"
-            type="number"
-            value={mrAfter}
-            onChange={(e) => setMrAfter(e.target.value)}
-            required
-            min={0}
-          />
-        </label>
-      </div>
+          <div className="grid gap-2">
+            <Label htmlFor="mr-after">MR（変動後）</Label>
+            <Input
+              id="mr-after"
+              type="number"
+              className="mr-input"
+              value={mrAfter}
+              onChange={(e) => setMrAfter(e.target.value)}
+              required
+              min={0}
+            />
+          </div>
 
-      <label className="memo-field">
-        メモ
-        <input type="text" value={memo} onChange={(e) => setMemo(e.target.value)} placeholder="任意メモ" />
-      </label>
+          <div className="grid gap-2 sm:col-span-2">
+            <Label htmlFor="memo">メモ</Label>
+            <Input
+              id="memo"
+              type="text"
+              value={memo}
+              onChange={(e) => setMemo(e.target.value)}
+              placeholder="任意メモ"
+            />
+          </div>
 
-      {error && <p className="error">{error}</p>}
-      <button type="submit" className="btn-submit" disabled={saving}>
-        {saving ? "保存中..." : "登録"}
-      </button>
-    </form>
+          {error && <p className="text-destructive text-sm sm:col-span-2">{error}</p>}
+
+          <Button type="submit" className="sm:col-span-2" disabled={saving}>
+            {saving ? "保存中..." : "登録"}
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
   );
 }
