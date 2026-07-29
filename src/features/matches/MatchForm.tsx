@@ -17,8 +17,8 @@ export function MatchForm({ onCreated }: Props) {
   const [myChar, setMyChar] = useState<string>(SF6_CHARACTERS[0].id);
   const [oppChar, setOppChar] = useState<string>(SF6_CHARACTERS[1].id);
   const [result, setResult] = useState<"win" | "loss">("win");
-  const [mrBefore, setMrBefore] = useState("");
-  const [mrAfter, setMrAfter] = useState("");
+  const [mrBefore, setMrBefore] = useState("1500");
+  const [mrAfter, setMrAfter] = useState("1500");
   const [memo, setMemo] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
@@ -65,7 +65,7 @@ export function MatchForm({ onCreated }: Props) {
     try {
       await invoke("create_match", { m });
       setMrBefore(mrAfter);
-      setMrAfter("");
+      setMrAfter(mrAfter);
       setMemo("");
       resumeSync();
       onCreated();
@@ -130,12 +130,30 @@ export function MatchForm({ onCreated }: Props) {
 
       <label>
         MR（変動前）
-        <input type="number" value={mrBefore} onChange={(e) => setMrBefore(e.target.value)} required min={0} />
+        <input
+          className="mr-input"
+          type="number"
+          value={mrBefore}
+          onChange={(e) => {
+            const next = e.target.value;
+            setMrBefore(next);
+            setMrAfter(next);
+          }}
+          required
+          min={0}
+        />
       </label>
 
       <label>
         MR（変動後）
-        <input type="number" value={mrAfter} onChange={(e) => setMrAfter(e.target.value)} required min={0} />
+        <input
+          className="mr-input"
+          type="number"
+          value={mrAfter}
+          onChange={(e) => setMrAfter(e.target.value)}
+          required
+          min={0}
+        />
       </label>
 
       <label>
