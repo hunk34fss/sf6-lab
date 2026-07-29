@@ -1,17 +1,27 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import type { Match } from "../../domain/match";
 import { SF6_CHARACTERS } from "../../domain/match";
 
+export interface MatchFormPrefill {
+  my_character?: string;
+  opponent_character?: string;
+  result?: "win" | "loss";
+  mr_before?: number;
+  mr_after?: number;
+}
+
 interface Props {
   onCreated: () => void;
+  prefill?: MatchFormPrefill | null;
+  prefillVersion?: number;
 }
 
 function formatLocalDateTime(date: Date): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}T${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}:${String(date.getSeconds()).padStart(2, "0")}`;
 }
 
-export function MatchForm({ onCreated }: Props) {
+export function MatchForm({ onCreated, prefill, prefillVersion = 0 }: Props) {
   const [playedAt, setPlayedAt] = useState(() => formatLocalDateTime(new Date()));
   const [syncNow, setSyncNow] = useState(true);
   const [myChar, setMyChar] = useState<string>(SF6_CHARACTERS[0].id);
@@ -22,6 +32,7 @@ export function MatchForm({ onCreated }: Props) {
   const [memo, setMemo] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const lastPrefillVersion = useRef(0);
 
   useEffect(() => {
     if (!syncNow) return;
@@ -30,6 +41,20 @@ export function MatchForm({ onCreated }: Props) {
     const id = window.setInterval(tick, 1000);
     return () => window.clearInterval(id);
   }, [syncNow]);
+
+  useEffect(() => {
+    if (!prefill || prefillVersion === lastPrefillVersion.current) return;
+    lastPrefillVersion.current = prefillVersion;
+
+    if (prefill.my_character) setMyChar(prefill.my_character);
+    if (prefill.opponent_character) setOppChar(prefill.opponent_character);
+    if (prefill.result) setResult(prefill.result);
+    if (prefill.mr_before != null) {
+      setMrBefore(String(prefill.mr_before));
+      if (prefill.mr_after == null) setMrAfter(String(prefill.mr_before));
+    }
+    if (prefill.mr_after != null) setMrAfter(String(prefill.mr_after));
+  }, [prefill, prefillVersion]);
 
   const resumeSync = useCallback(() => {
     setPlayedAt(formatLocalDateTime(new Date()));
