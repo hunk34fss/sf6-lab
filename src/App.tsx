@@ -1,49 +1,82 @@
-import { useState } from "react";
-import reactLogo from "./assets/react.svg";
+import { useState, useEffect, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import type { Match } from "./domain/match";
+import { calcMrTimeline, calcWinRateByCharacter, calcOverallWinRate } from "./domain/stats";
+import { MatchForm } from "./features/matches/MatchForm";
+import { MatchList } from "./features/matches/MatchList";
+import { MrTrendChart } from "./features/dashboard/MrTrendChart";
+import { WinRateCards } from "./features/dashboard/WinRateCards";
 import "./App.css";
 
-function App() {
-  const [greetMsg, setGreetMsg] = useState("");
-  const [name, setName] = useState("");
+type Tab = "input" | "dashboard";
 
-  async function greet() {
-    // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-    setGreetMsg(await invoke("greet", { name }));
-  }
+function App() {
+  const [matches, setMatches] = useState<Match[]>([]);
+  const [tab, setTab] = useState<Tab>("input");
+  const [recentN, setRecentN] = useState<number>(0);
+
+  const loadMatches = useCallback(async () => {
+    try {
+      const data: Match[] = await invoke("get_matches");
+      setMatches(data);
+    } catch (err) {
+      console.error(err);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadMatches();
+  }, [loadMatches]);
+
+  const filtered = recentN > 0 ? matches.slice(0, recentN) : matches;
+  const mrData = calcMrTimeline(filtered);
+  const myCharStats = calcWinRateByCharacter(filtered, "my_character");
+  const oppCharStats = calcWinRateByCharacter(filtered, "opponent_character");
+  const overall = calcOverallWinRate(filtered);
 
   return (
-    <main className="container">
-      <h1>Welcome to Tauri + React</h1>
+    <main className="app">
+      <header className="app-header">
+        <h1>SF6 Lab</h1>
+        <nav className="tab-nav">
+          <button className={tab === "input" ? "active" : ""} onClick={() => setTab("input")}>
+            対戦入力
+          </button>
+          <button className={tab === "dashboard" ? "active" : ""} onClick={() => setTab("dashboard")}>
+            ダッシュボード
+          </button>
+        </nav>
+      </header>
 
-      <div className="row">
-        <a href="https://vite.dev" target="_blank">
-          <img src="/vite.svg" className="logo vite" alt="Vite logo" />
-        </a>
-        <a href="https://tauri.app" target="_blank">
-          <img src="/tauri.svg" className="logo tauri" alt="Tauri logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <p>Click on the Tauri, Vite, and React logos to learn more.</p>
+      {tab === "input" && (
+        <div className="tab-content">
+          <MatchForm onCreated={loadMatches} />
+          <MatchList matches={matches} onDeleted={loadMatches} />
+        </div>
+      )}
 
-      <form
-        className="row"
-        onSubmit={(e) => {
-          e.preventDefault();
-          greet();
-        }}
-      >
-        <input
-          id="greet-input"
-          onChange={(e) => setName(e.currentTarget.value)}
-          placeholder="Enter a name..."
-        />
-        <button type="submit">Greet</button>
-      </form>
-      <p>{greetMsg}</p>
+      {tab === "dashboard" && (
+        <div className="tab-content">
+          <div className="filter-bar">
+            <label>
+              表示件数:
+              <select value={recentN} onChange={(e) => setRecentN(Number(e.target.value))}>
+                <option value={0}>全件</option>
+                <option value={10}>直近10戦</option>
+                <option value={20}>直近20戦</option>
+                <option value={50}>直近50戦</option>
+              </select>
+            </label>
+            <div className="overall-stats">
+              <span>総合: {overall.wins}W {overall.losses}L</span>
+              <span className="overall-rate">({(overall.winRate * 100).toFixed(1)}%)</span>
+            </div>
+          </div>
+          <MrTrendChart data={mrData} />
+          <WinRateCards title="自キャラ別勝率" stats={myCharStats} />
+          <WinRateCards title="相手キャラ別勝率" stats={oppCharStats} />
+        </div>
+      )}
     </main>
   );
 }
