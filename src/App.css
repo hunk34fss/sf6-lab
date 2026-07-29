@@ -72,6 +72,37 @@ body {
   color: var(--text-muted);
 }
 
+.datetime-field { grid-column: 1 / -1; }
+
+.datetime-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.datetime-row input { flex: 1; }
+
+.btn-sync {
+  background: transparent;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.btn-sync:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.datetime-hint {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
 .match-form input,
 .match-form select {
   background: var(--bg);

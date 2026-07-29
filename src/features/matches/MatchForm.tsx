@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import type { Match } from "../../domain/match";
 import { SF6_CHARACTERS } from "../../domain/match";
@@ -7,11 +7,13 @@ interface Props {
   onCreated: () => void;
 }
 
-export function MatchForm({ onCreated }: Props) {
-  const now = new Date();
-  const localIso = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}T${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+function formatLocalDateTime(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}T${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}:${String(date.getSeconds()).padStart(2, "0")}`;
+}
 
-  const [playedAt, setPlayedAt] = useState(localIso);
+export function MatchForm({ onCreated }: Props) {
+  const [playedAt, setPlayedAt] = useState(() => formatLocalDateTime(new Date()));
+  const [syncNow, setSyncNow] = useState(true);
   const [myChar, setMyChar] = useState<string>(SF6_CHARACTERS[0]);
   const [oppChar, setOppChar] = useState<string>(SF6_CHARACTERS[1]);
   const [result, setResult] = useState<"win" | "loss">("win");
@@ -20,6 +22,19 @@ export function MatchForm({ onCreated }: Props) {
   const [memo, setMemo] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!syncNow) return;
+    const tick = () => setPlayedAt(formatLocalDateTime(new Date()));
+    tick();
+    const id = window.setInterval(tick, 1000);
+    return () => window.clearInterval(id);
+  }, [syncNow]);
+
+  const resumeSync = useCallback(() => {
+    setPlayedAt(formatLocalDateTime(new Date()));
+    setSyncNow(true);
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -52,6 +67,7 @@ export function MatchForm({ onCreated }: Props) {
       setMrBefore(mrAfter);
       setMrAfter("");
       setMemo("");
+      resumeSync();
       onCreated();
     } catch (err) {
       setError(String(err));
@@ -64,14 +80,26 @@ export function MatchForm({ onCreated }: Props) {
     <form onSubmit={handleSubmit} className="match-form">
       <h2>対戦結果を登録</h2>
 
-      <label>
+      <label className="datetime-field">
         日時
-        <input
-          type="datetime-local"
-          value={playedAt}
-          onChange={(e) => setPlayedAt(e.target.value)}
-          required
-        />
+        <div className="datetime-row">
+          <input
+            type="datetime-local"
+            step="1"
+            value={playedAt}
+            onChange={(e) => {
+              setSyncNow(false);
+              setPlayedAt(e.target.value);
+            }}
+            required
+          />
+          <button type="button" className="btn-sync" onClick={resumeSync} disabled={syncNow}>
+            {syncNow ? "同期中" : "現在時刻に同期"}
+          </button>
+        </div>
+        <span className="datetime-hint">
+          {syncNow ? "PC時刻とリアルタイム同期中（手動編集も可能）" : "手動編集中"}
+        </span>
       </label>
 
       <label>
