@@ -120,49 +120,64 @@ export function MatchForm({ onCreated }: Props) {
         </select>
       </label>
 
-      <label>
-        結果
-        <select value={result} onChange={(e) => setResult(e.target.value as "win" | "loss")}>
-          <option value="win">勝ち</option>
-          <option value="loss">負け</option>
-        </select>
-      </label>
+      <div className="result-field">
+        <span className="field-label">結果</span>
+        <div className="result-toggle" role="group" aria-label="勝敗">
+          <button
+            type="button"
+            className={`result-btn win ${result === "win" ? "active" : ""}`}
+            onClick={() => setResult("win")}
+          >
+            勝ち
+          </button>
+          <button
+            type="button"
+            className={`result-btn loss ${result === "loss" ? "active" : ""}`}
+            onClick={() => setResult("loss")}
+          >
+            負け
+          </button>
+        </div>
+      </div>
 
-      <label>
-        MR（変動前）
-        <input
-          className="mr-input"
-          type="number"
-          value={mrBefore}
-          onChange={(e) => {
-            const next = e.target.value;
-            setMrBefore(next);
-            setMrAfter(next);
-          }}
-          required
-          min={0}
-        />
-      </label>
+      <div className="mr-row">
+        <label>
+          MR（変動前）
+          <input
+            className="mr-input"
+            type="number"
+            value={mrBefore}
+            onChange={(e) => {
+              const next = e.target.value;
+              setMrBefore(next);
+              setMrAfter(next);
+            }}
+            required
+            min={0}
+          />
+        </label>
+        <label>
+          MR（変動後）
+          <input
+            className="mr-input"
+            type="number"
+            value={mrAfter}
+            onChange={(e) => setMrAfter(e.target.value)}
+            required
+            min={0}
+          />
+        </label>
+      </div>
 
-      <label>
-        MR（変動後）
-        <input
-          className="mr-input"
-          type="number"
-          value={mrAfter}
-          onChange={(e) => setMrAfter(e.target.value)}
-          required
-          min={0}
-        />
-      </label>
-
-      <label>
+      <label className="memo-field">
         メモ
         <input type="text" value={memo} onChange={(e) => setMemo(e.target.value)} placeholder="任意メモ" />
       </label>
 
       {error && <p className="error">{error}</p>}
-      <button type="submit" disabled={saving}>{saving ? "保存中..." : "登録"}</button>
+      <button type="submit" className="btn-submit" disabled={saving}>
+        {saving ? "保存中..." : "登録"}
+      </button>
     </form>
   );
 }

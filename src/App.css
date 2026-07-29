@@ -113,23 +113,71 @@ body {
   font-size: 0.9rem;
 }
 
-.mr-input {
-  height: 44px;
-  font-size: 1.05rem;
-  padding-right: 8px;
+.result-field {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.field-label {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.result-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.result-btn {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  padding: 10px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+
+.result-btn.win.active {
+  background: color-mix(in srgb, var(--win) 20%, var(--bg));
+  border-color: var(--win);
+  color: var(--win);
+}
+
+.result-btn.loss.active {
+  background: color-mix(in srgb, var(--loss) 20%, var(--bg));
+  border-color: var(--loss);
+  color: var(--loss);
+}
+
+.mr-row {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
 }
 
 .mr-input::-webkit-inner-spin-button,
 .mr-input::-webkit-outer-spin-button {
-  opacity: 1;
-  width: 28px;
-  height: 40px;
+  opacity: 0;
   cursor: pointer;
-  transform: scale(1.35);
-  margin-left: 4px;
 }
 
-.match-form button {
+.mr-input:hover::-webkit-inner-spin-button,
+.mr-input:hover::-webkit-outer-spin-button,
+.mr-input:focus::-webkit-inner-spin-button,
+.mr-input:focus::-webkit-outer-spin-button {
+  opacity: 1;
+}
+
+.memo-field {
+  grid-column: 1 / -1;
+}
+
+.btn-submit {
   grid-column: 1 / -1;
   background: var(--accent);
   color: #fff;
@@ -140,7 +188,7 @@ body {
   cursor: pointer;
 }
 
-.match-form button:disabled { opacity: 0.6; }
+.btn-submit:disabled { opacity: 0.6; }
 .match-form .error { grid-column: 1 / -1; color: var(--loss); font-size: 0.85rem; }
 
 /* Table */
