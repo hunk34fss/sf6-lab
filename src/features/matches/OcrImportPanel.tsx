@@ -1,8 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { characterDisplayName } from "../../domain/match";
-import type { OcrMatchDraft } from "../../domain/ocrParse";
-import { OcrSource } from "../../infrastructure/import/OcrSource";
+import { characterDisplayName } from "@/domain/match";
+import type { OcrMatchDraft } from "@/domain/ocrParse";
+import { OcrSource } from "@/infrastructure/import/OcrSource";
 import type { MatchFormPrefill } from "./MatchForm";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 
 interface Props {
   onApply: (prefill: MatchFormPrefill) => void;
@@ -122,63 +132,87 @@ export function OcrImportPanel({ onApply }: Props) {
   }
 
   return (
-    <section className="ocr-panel">
-      <div className="ocr-header">
-        <h2>OCR取込</h2>
-        <p className="ocr-desc">ランクマッチ結果画面のスクショから自動入力します（確認後に登録）</p>
-      </div>
-
-      <div className="ocr-actions">
-        <button type="button" className="btn-secondary" disabled={busy} onClick={() => fileInputRef.current?.click()}>
-          画像ファイルを選択
-        </button>
-        <button type="button" className="btn-secondary" disabled={busy} onClick={() => void handlePasteClipboard()}>
-          クリップボードから貼り付け
-        </button>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/png,image/jpeg,image/webp,image/bmp"
-          hidden
-          onChange={(e) => void handleFileChange(e)}
-        />
-      </div>
-
-      <p className="ocr-hint">Ctrl+V でも画像を貼り付けできます</p>
-      <p className="ocr-status">{status}</p>
-      {error && <p className="error">{error}</p>}
-
-      {previewUrl && (
-        <div className="ocr-preview">
-          <img src={previewUrl} alt="OCR対象プレビュー" />
+    <Card>
+      <CardHeader>
+        <CardTitle>OCR取込</CardTitle>
+        <CardDescription>
+          ランクマッチ結果画面のスクショから自動入力します（確認後に登録）
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="grid gap-4">
+        <div className="flex flex-wrap gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            disabled={busy}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            画像ファイルを選択
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={busy}
+            onClick={() => void handlePasteClipboard()}
+          >
+            クリップボードから貼り付け
+          </Button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/png,image/jpeg,image/webp,image/bmp"
+            hidden
+            onChange={(e) => void handleFileChange(e)}
+          />
         </div>
-      )}
 
-      {draft && (
-        <div className="ocr-draft">
-          <h3>解析結果</h3>
-          <ul>
-            <li>自キャラ: {draft.my_character ? characterDisplayName(draft.my_character) : "未検出"}</li>
-            <li>相手キャラ: {draft.opponent_character ? characterDisplayName(draft.opponent_character) : "未検出"}</li>
-            <li>結果: {draft.result === "win" ? "勝ち" : draft.result === "loss" ? "負け" : "未検出"}</li>
-            <li>MR: {draft.mr_before ?? "?"} → {draft.mr_after ?? "?"}</li>
-          </ul>
-          {draft.notes.length > 0 && (
-            <ul className="ocr-notes">
-              {draft.notes.map((n) => (
-                <li key={n}>{n}</li>
-              ))}
-            </ul>
-          )}
-          <details className="ocr-raw">
-            <summary>OCR生テキスト</summary>
-            <pre>{draft.raw_text}</pre>
-          </details>
-          <button type="button" className="btn-submit" disabled={busy} onClick={handleApply}>
-            フォームに反映
-          </button>
-        </div>
-      )}
-    </section>
+        <p className="text-muted-foreground text-xs">Ctrl+V でも画像を貼り付けできます</p>
+        <p className="text-muted-foreground text-sm">{status}</p>
+        {error && <p className="text-destructive text-sm">{error}</p>}
+
+        {previewUrl && (
+          <div className="overflow-hidden rounded-lg border bg-muted/30">
+            <img src={previewUrl} alt="OCR対象プレビュー" className="max-h-70 w-full object-contain" />
+          </div>
+        )}
+
+        {draft && (
+          <div className="grid gap-3">
+            <Separator />
+            <h3 className="font-medium">解析結果</h3>
+            <div className="flex flex-wrap gap-2">
+              <Badge variant="secondary">
+                自キャラ: {draft.my_character ? characterDisplayName(draft.my_character) : "未検出"}
+              </Badge>
+              <Badge variant="secondary">
+                相手: {draft.opponent_character ? characterDisplayName(draft.opponent_character) : "未検出"}
+              </Badge>
+              <Badge variant="secondary">
+                結果: {draft.result === "win" ? "勝ち" : draft.result === "loss" ? "負け" : "未検出"}
+              </Badge>
+              <Badge variant="secondary">
+                MR: {draft.mr_before ?? "?"} → {draft.mr_after ?? "?"}
+              </Badge>
+            </div>
+            {draft.notes.length > 0 && (
+              <ul className="text-muted-foreground list-inside list-disc text-xs">
+                {draft.notes.map((n) => (
+                  <li key={n}>{n}</li>
+                ))}
+              </ul>
+            )}
+            <details>
+              <summary className="text-muted-foreground cursor-pointer text-sm">OCR生テキスト</summary>
+              <pre className="mt-2 max-h-40 overflow-auto rounded-md border bg-muted/40 p-3 text-xs whitespace-pre-wrap">
+                {draft.raw_text}
+              </pre>
+            </details>
+            <Button type="button" disabled={busy} onClick={handleApply}>
+              フォームに反映
+            </Button>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
