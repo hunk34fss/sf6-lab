@@ -33,10 +33,14 @@ export const SF6_CHARACTERS = [
   { id: "A.K.I.", ja: "A.K.I." },
   { id: "Ed", ja: "エド" },
   { id: "Akuma", ja: "豪鬼" },
-  { id: "M.Bison", ja: "M.バイソン" },
+  { id: "M.Bison", ja: "ベガ" },
   { id: "Terry", ja: "テリー" },
   { id: "Mai", ja: "舞" },
   { id: "Elena", ja: "エレナ" },
+  { id: "Sagat", ja: "サガット" },
+  { id: "C.Viper", ja: "ヴァイパー" },
+  { id: "Alex", ja: "アレックス" },
+  { id: "Ingrid", ja: "イングリッド" },
 ] as const;
 
 export type Sf6CharacterId = (typeof SF6_CHARACTERS)[number]["id"];
