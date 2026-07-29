@@ -1,4 +1,5 @@
 mod db;
+mod ocr;
 
 use db::{DbState, Match};
 use tauri::Manager;
@@ -31,7 +32,12 @@ pub fn run() {
             app.manage(DbState(std::sync::Mutex::new(conn)));
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![create_match, get_matches, delete_match])
+        .invoke_handler(tauri::generate_handler![
+            create_match,
+            get_matches,
+            delete_match,
+            ocr::ocr_match_screenshot
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
