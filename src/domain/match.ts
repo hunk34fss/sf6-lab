@@ -7,6 +7,7 @@ export interface Match {
   mr_before: number;
   mr_after: number;
   memo: string;
+  season_id?: number;
 }
 
 /** English id (stored in DB) → Japanese display name */

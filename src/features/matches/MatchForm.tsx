@@ -37,26 +37,36 @@ export interface MatchFormPrefill {
 
 interface Props {
   onCreated: () => void;
+  /** Preferred MR when form mounts or after season reset (latest in season or starting_mr). */
+  defaultMr?: string;
 }
 
 function formatLocalDateTime(date: Date): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}T${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}:${String(date.getSeconds()).padStart(2, "0")}`;
 }
 
-export function MatchForm({ onCreated }: Props) {
+export function MatchForm({ onCreated, defaultMr = "1500" }: Props) {
   const [playedAt, setPlayedAt] = useState(() => formatLocalDateTime(new Date()));
   const [syncNow, setSyncNow] = useState(true);
   const [myChar, setMyChar] = useState<string>(SF6_CHARACTERS[0].id);
   const [oppChar, setOppChar] = useState<string>(SF6_CHARACTERS[1].id);
   const [result, setResult] = useState<"win" | "loss">("win");
-  const [mrBefore, setMrBefore] = useState("1500");
-  const [mrAfter, setMrAfter] = useState("1500");
+  const [mrBefore, setMrBefore] = useState(defaultMr);
+  const [mrAfter, setMrAfter] = useState(defaultMr);
   const [memo, setMemo] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [ocrOpen, setOcrOpen] = useState(false);
   const [autoCaptureToken, setAutoCaptureToken] = useState(0);
   const hotkeyBusy = useRef(false);
+  const lastAppliedDefault = useRef(defaultMr);
+
+  useEffect(() => {
+    if (lastAppliedDefault.current === defaultMr) return;
+    lastAppliedDefault.current = defaultMr;
+    setMrBefore(defaultMr);
+    setMrAfter(defaultMr);
+  }, [defaultMr]);
 
   useEffect(() => {
     if (!syncNow) return;
