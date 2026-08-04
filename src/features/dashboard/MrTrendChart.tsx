@@ -1,26 +1,38 @@
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
+import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 import type { MrDataPoint } from "@/domain/stats";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  type ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
 
 interface Props {
   data: MrDataPoint[];
 }
 
+const chartConfig = {
+  mr: {
+    label: "MR",
+    color: "var(--chart-1)",
+  },
+} satisfies ChartConfig;
+
 export function MrTrendChart({ data }: Props) {
   if (data.length === 0) {
     return (
       <Card>
-        <CardContent className="text-muted-foreground py-10 text-center">
-          MRデータがありません
-        </CardContent>
+        <CardHeader>
+          <CardTitle>MR推移</CardTitle>
+          <CardDescription>まだ表示できる MR データがありません</CardDescription>
+        </CardHeader>
       </Card>
     );
   }
@@ -34,28 +46,39 @@ export function MrTrendChart({ data }: Props) {
     <Card>
       <CardHeader>
         <CardTitle>MR推移</CardTitle>
+        <CardDescription>対戦ごとの MR 推移</CardDescription>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={formatted}>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.6} />
-            <XAxis dataKey="label" stroke="var(--muted-foreground)" tick={{ fill: "var(--muted-foreground)", fontSize: 12 }} />
+        <ChartContainer config={chartConfig} className="aspect-auto h-[300px] w-full">
+          <LineChart data={formatted} accessibilityLayer>
+            <CartesianGrid vertical={false} />
+            <XAxis
+              dataKey="label"
+              tickLine={false}
+              axisLine={false}
+              tickMargin={8}
+            />
             <YAxis
               domain={["dataMin - 50", "dataMax + 50"]}
-              stroke="var(--muted-foreground)"
-              tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
+              tickLine={false}
+              axisLine={false}
+              tickMargin={8}
+              width={48}
             />
-            <Tooltip
-              contentStyle={{
-                background: "var(--card)",
-                border: "1px solid var(--border)",
-                borderRadius: "8px",
-                color: "var(--card-foreground)",
-              }}
+            <ChartTooltip
+              cursor={false}
+              content={<ChartTooltipContent indicator="line" />}
             />
-            <Line type="monotone" dataKey="mr" stroke="#60a5fa" strokeWidth={2} dot={{ r: 3 }} />
+            <Line
+              type="monotone"
+              dataKey="mr"
+              stroke="var(--color-mr)"
+              strokeWidth={2}
+              dot={{ r: 3 }}
+              activeDot={{ r: 4 }}
+            />
           </LineChart>
-        </ResponsiveContainer>
+        </ChartContainer>
       </CardContent>
     </Card>
   );
