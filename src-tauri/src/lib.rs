@@ -2,7 +2,7 @@ mod capture;
 mod db;
 mod ocr;
 
-use db::{DbState, Match};
+use db::{DbState, Match, ResetSeasonInput, Season};
 use tauri::Manager;
 
 #[tauri::command]
@@ -12,15 +12,59 @@ fn create_match(state: tauri::State<'_, DbState>, m: Match) -> Result<i64, Strin
 }
 
 #[tauri::command]
-fn get_matches(state: tauri::State<'_, DbState>) -> Result<Vec<Match>, String> {
+fn get_matches(
+    state: tauri::State<'_, DbState>,
+    season_id: Option<i64>,
+) -> Result<Vec<Match>, String> {
     let conn = state.0.lock().map_err(|e| e.to_string())?;
-    db::get_all_matches(&conn).map_err(|e| e.to_string())
+    db::get_matches_by_season(&conn, season_id).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
 fn delete_match(state: tauri::State<'_, DbState>, id: i64) -> Result<usize, String> {
     let conn = state.0.lock().map_err(|e| e.to_string())?;
     db::delete_match(&conn, id).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn get_seasons(state: tauri::State<'_, DbState>) -> Result<Vec<Season>, String> {
+    let conn = state.0.lock().map_err(|e| e.to_string())?;
+    db::get_seasons(&conn).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn get_current_season(state: tauri::State<'_, DbState>) -> Result<Season, String> {
+    let conn = state.0.lock().map_err(|e| e.to_string())?;
+    db::get_current_season(&conn).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn reset_season(
+    state: tauri::State<'_, DbState>,
+    input: ResetSeasonInput,
+) -> Result<Season, String> {
+    let conn = state.0.lock().map_err(|e| e.to_string())?;
+    db::reset_season(&conn, &input).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn get_season_summary(
+    state: tauri::State<'_, DbState>,
+    season_id: i64,
+) -> Result<SeasonSummary, String> {
+    let conn = state.0.lock().map_err(|e| e.to_string())?;
+    let match_count = db::count_matches_in_season(&conn, season_id).map_err(|e| e.to_string())?;
+    let latest_mr = db::latest_mr_in_season(&conn, season_id).map_err(|e| e.to_string())?;
+    Ok(SeasonSummary {
+        match_count,
+        latest_mr,
+    })
+}
+
+#[derive(serde::Serialize)]
+struct SeasonSummary {
+    match_count: i64,
+    latest_mr: Option<i64>,
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -38,6 +82,10 @@ pub fn run() {
             create_match,
             get_matches,
             delete_match,
+            get_seasons,
+            get_current_season,
+            reset_season,
+            get_season_summary,
             ocr::ocr_match_screenshot,
             capture::capture_sf6_window
         ])
