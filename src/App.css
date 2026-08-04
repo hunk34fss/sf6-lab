@@ -10,3 +10,27 @@
   -moz-appearance: textfield;
   appearance: textfield;
 }
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  .season-report,
+  .season-report * {
+    visibility: visible;
+  }
+
+  .season-report {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    background: white;
+    color: black;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+}
+
